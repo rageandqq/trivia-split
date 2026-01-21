@@ -16,8 +16,23 @@ body {
 }
 
 h1 {
-    text-align: center;
+    /* text-align: center; This will be handled by .logo-container */
     color: #1c1e21;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.logo-image {
+    height: 100px; /* Adjust as needed */
+    width: 100px; /* Make width equal to height for circular image */
+    border-radius: 50px; /* Make it circular */
+    margin-right: 10px;
+    vertical-align: middle; /* Ensure vertical alignment with text */
 }
 
 .settings, .add-member, .members-container {
