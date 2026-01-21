@@ -62,7 +62,6 @@ h1 {
 .settings-icon {
     width: 20px;
     height: 20px;
-    filter: invert(100%); /* Invert colors to make black lines white */
 }
 
 
