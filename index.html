@@ -379,7 +379,7 @@
                         <div>
                             <p className="final-owed">Final Owed: <span>${calculated.finalOwed.toFixed(2)}</span></p>
                             <button className="details-btn" onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}>
-                                {isDetailsCollapsed ? 'Show' : 'Hide'} Details
+                                Details <ChevronIcon isCollapsed={isDetailsCollapsed} />
                             </button>
                             {!isDetailsCollapsed && (
                                 <div className="calculations">

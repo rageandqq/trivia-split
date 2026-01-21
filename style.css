@@ -359,6 +359,16 @@ button:disabled {
 .details-btn {
     background-color: #6c757d;
     margin-top: 10px;
+    display: flex; /* Make it a flex container */
+    align-items: center; /* Vertically align items */
+    justify-content: center; /* Horizontally center items (if needed) */
+    padding: 6px 10px; /* Reduced padding for smaller height */
+    gap: 5px; /* Space between text and icon */
+}
+
+.details-btn .chevron-icon {
+    width: 18px; /* Slightly smaller icon */
+    height: 18px;
 }
 
 .settings-popover-overlay {
@@ -390,7 +400,7 @@ button:disabled {
     overflow-y: auto;
     position: fixed; /* Positioned relative to viewport */
     top: 90.5px; /* Below gear icon */
-    right: calc(50vw - 400px + 10px); /* Aligns with icon's right edge */
+    right: calc(50vw - 400px); /* Aligns with icon's right edge */
     margin: 0; /* Override any default margin */
     transform: translateX(0); /* Initial state for desktop popover */
     transition: transform 0.3s ease-out; /* Smooth transition for opening/closing */
