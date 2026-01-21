@@ -494,4 +494,10 @@ button:disabled {
     flex: 1; /* Make buttons take equal space */
     padding: 8px 5px; /* Adjust padding for smaller buttons */
     font-size: 0.9em;
+    background-color: #e0e0e0; /* Light gray */
+    color: #333; /* Dark gray text */
+}
+
+.quick-add-winnings-buttons button:hover {
+    background-color: #cccccc; /* Slightly darker gray on hover */
 }
