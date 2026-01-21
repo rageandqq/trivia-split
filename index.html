@@ -64,6 +64,20 @@
         }
 
 
+
+        function SummarySection({ calculations }) {
+            return (
+                <div className="summary-section">
+                    {calculations.map(member => (
+                        <div key={member.name} className="summary-member">
+                            <a href={`#${member.name}`}>{member.name}</a>
+                            <span>${member.finalOwed.toFixed(2)}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
         function App() {
             const [members, setMembers] = useState([]);
 
@@ -191,6 +205,10 @@
                     <h1>Trivia Night Splitter</h1>
                 </div>
 
+                    <CollapsibleSection title="Summary">
+                        <SummarySection calculations={calculations} />
+                    </CollapsibleSection>
+
                     <CollapsibleSection title="Global Settings">
                         <div className="settings">
                             <div className="input-group">
@@ -215,6 +233,7 @@
                                     type="text"
                                     value={newMemberName}
                                     onChange={e => setNewMemberName(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleAddMember()}
                                     placeholder="Enter member name"
                                 />
                                 <button onClick={handleAddMember}>Add Member</button>
@@ -244,6 +263,7 @@
 
         function Member({ member, calculated, onRemoveMember, onAddExpense, onRemoveExpense }) {
             const [newExpense, setNewExpense] = useState("");
+            const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);
 
             const handleAddExpense = () => {
                 if (newExpense.trim()) {
@@ -251,9 +271,15 @@
                     setNewExpense("");
                 }
             };
+            
+            const handleExpenseKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    handleAddExpense();
+                }
+            };
 
             return (
-                <div className="member">
+                <div id={member.name} className="member">
                     <div className="member-header">
                         <h3>{member.name}</h3>
                         <button className="remove-member-btn" onClick={() => onRemoveMember(member.name)}>Remove</button>
@@ -274,6 +300,7 @@
                                 type="number"
                                 value={newExpense}
                                 onChange={e => setNewExpense(e.target.value)}
+                                onKeyDown={handleExpenseKeyDown}
                                 placeholder="Expense amount"
                             />
                             <button onClick={handleAddExpense}>Add</button>
@@ -281,13 +308,20 @@
                     </div>
 
                     {calculated && (
-                         <div className="calculations">
-                            <p>Subtotal: <span>${calculated.subtotal.toFixed(2)}</span></p>
-                            <p>Tax: <span>${calculated.tax.toFixed(2)}</span></p>
-                            <p>Tip: <span>${calculated.tip.toFixed(2)}</span></p>
-                            <p>Pre-Winnings: <span>${calculated.preWinningsTotal.toFixed(2)}</span></p>
-                            <p>Winnings Share: <span>-${calculated.winningsShare.toFixed(2)}</span></p>
+                        <div>
                             <p className="final-owed">Final Owed: <span>${calculated.finalOwed.toFixed(2)}</span></p>
+                            <button className="details-btn" onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}>
+                                {isDetailsCollapsed ? 'Show' : 'Hide'} Details
+                            </button>
+                            {!isDetailsCollapsed && (
+                                <div className="calculations">
+                                    <p>Subtotal: <span>${calculated.subtotal.toFixed(2)}</span></p>
+                                    <p>Tax: <span>${calculated.tax.toFixed(2)}</span></p>
+                                    <p>Tip: <span>${calculated.tip.toFixed(2)}</span></p>
+                                    <p>Pre-Winnings: <span>${calculated.preWinningsTotal.toFixed(2)}</span></p>
+                                    <p>Winnings Share: <span>-${calculated.winningsShare.toFixed(2)}</span></p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

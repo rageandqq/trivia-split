@@ -207,3 +207,57 @@ button:disabled {
 .section-content {
     padding: 20px;
 }
+
+.summary-section {
+    padding: 10px;
+}
+
+.summary-member {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.summary-member a {
+    text-decoration: none;
+    color: #1877f2;
+    font-weight: bold;
+}
+
+.summary-member span {
+    font-weight: bold;
+}
+
+.details-btn {
+    background-color: #6c757d;
+    margin-top: 10px;
+}
+
+@media (max-width: 500px) {
+    #root {
+        padding: 10px;
+    }
+
+    .logo-image {
+        height: 60px;
+        width: 60px;
+        border-radius: 30px;
+    }
+
+    h1 {
+        font-size: 1.5em;
+    }
+
+    .input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .input-group label {
+        margin-bottom: 5px;
+    }
+
+    .input-group input {
+        width: 100%;
+    }
+}
