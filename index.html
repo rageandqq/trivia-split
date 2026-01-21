@@ -207,64 +207,70 @@
                                 return {
                                     name: member.name,
                                     subtotal,
-                                    winningsShare: 0,
-                                    // Tip is based on subtotal before any deductions
                                     tip: subtotal * (tipRate / 100),
+                                    winningsApplied: 0, // Track winnings applied to this member
                                 };
                             });
             
-                            // Determine pre-tax total for winnings distribution
-                            let tempMembers = membersCalculations.map(m => ({
+                            // Calculate preliminary owed (subtotal + tip) for distribution purposes
+                            let membersForWinnings = membersCalculations.map(m => ({
                                 ...m,
-                                // For winnings calculation, consider subtotal + tip
-                                preliminaryOwed: m.subtotal + m.tip
+                                preliminaryOwed: m.subtotal + m.tip,
                             }));
             
-                            let remainingWinnings = winnings;
-                            let membersStillOwing = tempMembers.filter(m => m.preliminaryOwed > 0);
+                            let totalWinningsToDistribute = winnings;
+                            let iterationCount = 0;
+                            const MAX_ITERATIONS = members.length * 2; // Prevent infinite loops
             
-                            while (remainingWinnings > 0 && membersStillOwing.length > 0) {
-                                const share = remainingWinnings / membersStillOwing.length;
-                                let excessWinnings = 0;
+                            while (totalWinningsToDistribute > 0 && iterationCount < MAX_ITERATIONS) {
+                                iterationCount++;
+                                let eligibleMembers = membersForWinnings.filter(m => m.preliminaryOwed - m.winningsApplied > 0);
             
-                                for (const member of membersStillOwing) {
-                                    const deduction = Math.min(member.preliminaryOwed, share);
-                                    member.preliminaryOwed -= deduction;
-            
-                                    // Find the original member calculation object to update winningsShare
-                                    const originalMember = membersCalculations.find(m => m.name === member.name);
-                                    originalMember.winningsShare += deduction;
-                                    
-                                    remainingWinnings -= deduction;
-                                    if (share > deduction) {
-                                        excessWinnings += share - deduction;
-                                    }
+                                if (eligibleMembers.length === 0) {
+                                    break; // No more members can receive winnings
                                 }
             
-                                const newMembersStillOwing = membersStillOwing.filter(m => m.preliminaryOwed > 0);
-                                 if (newMembersStillOwing.length === membersStillOwing.length && excessWinnings < 0.01) {
-                                    if (remainingWinnings > 0 && newMembersStillOwing.length > 0) {
-                                        const lastDitchShare = remainingWinnings / newMembersStillOwing.length;
-                                        for (const member of newMembersStillOwing) {
-                                            const deduction = Math.min(member.preliminaryOwed, lastDitchShare);
-                                            member.preliminaryOwed -= deduction;
-                                            const originalMember = membersCalculations.find(m => m.name === member.name);
-                                            originalMember.winningsShare += deduction;
+                                const sharePerEligibleMember = totalWinningsToDistribute / eligibleMembers.length;
+                                let winningsDistributedInThisIteration = 0;
+            
+                                for (const member of eligibleMembers) {
+                                    const canReceive = member.preliminaryOwed - member.winningsApplied;
+                                    const amountToApply = Math.min(sharePerEligibleMember, canReceive);
+            
+                                    member.winningsApplied += amountToApply;
+                                    winningsDistributedInThisIteration += amountToApply;
+                                }
+            
+                                totalWinningsToDistribute -= winningsDistributedInThisIteration;
+                                // If no winnings were distributed, or very little, break to prevent tiny remainder loops
+                                if (winningsDistributedInThisIteration < 0.01 && totalWinningsToDistribute > 0) {
+                                    // Distribute remaining winnings evenly among whoever can still receive
+                                    const remainingEligible = membersForWinnings.filter(m => m.preliminaryOwed - m.winningsApplied > 0);
+                                    if (remainingEligible.length > 0) {
+                                        const finalShare = totalWinningsToDistribute / remainingEligible.length;
+                                        for(const member of remainingEligible) {
+                                            const canReceive = member.preliminaryOwed - member.winningsApplied;
+                                            const amountToApply = Math.min(finalShare, canReceive);
+                                            member.winningsApplied += amountToApply;
                                         }
                                     }
-                                    break;
+                                    totalWinningsToDistribute = 0; // All winnings accounted for
                                 }
-                                membersStillOwing = newMembersStillOwing;
-                                remainingWinnings += excessWinnings;
                             }
             
-                            // Now, calculate the final values with the correct tax
-                            return membersCalculations.map(member => {
-                                const tax = Math.max(0, member.subtotal - member.winningsShare) * (taxRate / 100);
-                                const preWinningsTotal = member.subtotal + tax + member.tip;
-                                const finalOwed = preWinningsTotal - member.winningsShare;
+                            // Now, calculate the final values with the correct tax and final owed
+                            return membersCalculations.map(originalMember => {
+                                const distributedWinnings = membersForWinnings.find(m => m.name === originalMember.name).winningsApplied;
+                                originalMember.winningsShare = distributedWinnings; // Update original object with final winnings share
+            
+                                const taxableAmount = Math.max(0, originalMember.subtotal - originalMember.winningsShare);
+                                const tax = taxableAmount * (taxRate / 100);
+            
+                                const preWinningsTotal = originalMember.subtotal + tax + originalMember.tip;
+                                const finalOwed = preWinningsTotal - originalMember.winningsShare;
+            
                                 return {
-                                    ...member,
+                                    ...originalMember,
                                     tax,
                                     preWinningsTotal,
                                     finalOwed: Math.max(0, finalOwed),
