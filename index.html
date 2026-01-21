@@ -105,6 +105,11 @@
                                     <input type="number" value={winnings} onChange={e => setWinnings(parseFloat(e.target.value) || 0)} disabled={members.length === 0} />
                                 </div>
                             </div>
+                            <div className="quick-add-winnings-buttons">
+                                <button onClick={() => setWinnings(35)} disabled={members.length === 0}>1st ($35)</button>
+                                <button onClick={() => setWinnings(25)} disabled={members.length === 0}>2nd ($25)</button>
+                                <button onClick={() => setWinnings(15)} disabled={members.length === 0}>3rd ($15)</button>
+                            </div>
                         </div>
                     </div>
                 </div>

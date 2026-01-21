@@ -482,3 +482,16 @@ button:disabled {
         height: 30px;
     }
 }
+.quick-add-winnings-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px; /* Space between buttons */
+    margin-top: 10px; /* Space from the winnings input field */
+    margin-bottom: 20px; /* Space before the next input-group */
+}
+
+.quick-add-winnings-buttons button {
+    flex: 1; /* Make buttons take equal space */
+    padding: 8px 5px; /* Adjust padding for smaller buttons */
+    font-size: 0.9em;
+}
