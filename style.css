@@ -459,8 +459,18 @@ button:disabled {
         margin-bottom: 5px;
     }
 
+    .input-with-suffix span,
+    .input-with-prefix span {
+        height: 34px; /* Match calculated height of input: 16px font + 2*8px padding + 2*1px border */
+        line-height: 16px; /* Match font-size for vertical centering */
+        box-sizing: border-box;
+    }
+
     .input-group input {
         width: 100%;
+        box-sizing: border-box;
+        height: 34px; /* Ensure input also matches this height explicitly */
+        line-height: 16px; /* Ensure input line-height matches */
     }
 
     .settings-popover-overlay.open {
