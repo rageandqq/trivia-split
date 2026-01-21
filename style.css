@@ -103,6 +103,12 @@ button:disabled {
     background-color: #166fe5;
 }
 
+/* Margin for '+' icon buttons within input groups */
+.input-group .icon-button {
+    margin-left: 10px;
+}
+
+
 .plus-icon {
     stroke: #fff;
 }
@@ -277,9 +283,22 @@ button:disabled {
         font-size: 1.5em;
     }
 
-    .input-group {
-        flex-direction: column;
-        align-items: stretch;
+    /* Override for specific input-groups that need to stay row-direction */
+    .input-group-responsive {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between; /* Pushes button to the right */
+    }
+    
+    .input-group-responsive input {
+        flex-grow: 1; /* Allow input to take available space */
+        width: auto; /* Override width: 100% */
+    }
+
+    .input-group-responsive .icon-button {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
     }
 
     .input-group label {

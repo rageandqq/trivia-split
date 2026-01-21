@@ -65,8 +65,8 @@
             );
         }
 
-        function CollapsibleSection({ title, children }) {
-            const [isCollapsed, setIsCollapsed] = useState(true);
+        function CollapsibleSection({ title, children, initialCollapsed = true }) {
+            const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
 
             return (
                 <div className="collapsible-section">
@@ -223,7 +223,7 @@
                     <h1>Trivia Night Splitter</h1>
                 </div>
 
-                    <CollapsibleSection title="Summary">
+                    <CollapsibleSection title="Summary" initialCollapsed={false}>
                         <SummarySection calculations={calculations} />
                     </CollapsibleSection>
 
@@ -246,7 +246,7 @@
 
                     <CollapsibleSection title="Add Member">
                         <div className="add-member">
-                            <div className="input-group">
+                            <div className="input-group input-group-responsive">
                                 <input
                                     type="text"
                                     value={newMemberName}
@@ -313,7 +313,7 @@
                                 </li>
                             ))}
                         </ul>
-                        <div className="input-group">
+                        <div className="input-group input-group-responsive">
                             <input
                                 type="number"
                                 value={newExpense}
