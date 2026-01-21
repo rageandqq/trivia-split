@@ -13,6 +13,7 @@ body {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Removed position: relative; */
 }
 
 h1 {
@@ -25,7 +26,7 @@ h1 {
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
-    position: relative; /* Needed for absolute positioning of settings icon */
+    position: relative; /* Ensure it's a positioning context for absolute children */
 }
 
 .logo-image {
@@ -37,7 +38,7 @@ h1 {
 }
 
 .settings-icon-btn {
-    position: absolute;
+    position: absolute; /* Position relative to .logo-container */
     top: 10px; /* Adjust as needed */
     right: 10px; /* Adjust as needed */
     background-color: #1877f2;
@@ -51,6 +52,7 @@ h1 {
     justify-content: center;
     width: 35px; /* Slightly larger for settings icon */
     height: 35px; /* Slightly larger for settings icon */
+    /* z-index removed */
 }
 
 .settings-icon-btn:hover {
@@ -58,9 +60,9 @@ h1 {
 }
 
 .settings-icon {
-    stroke: #fff;
     width: 20px;
     height: 20px;
+    filter: invert(100%); /* Invert colors to make black lines white */
 }
 
 
@@ -305,9 +307,15 @@ button:disabled {
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
     z-index: 1000;
-    display: flex;
-    justify-content: flex-end; /* Align popover content to top-right initially */
-    align-items: flex-start; /* Align popover content to top-right initially */
+    display: none; /* Hidden by default */
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.3s ease-in-out;
+}
+
+.settings-popover-overlay.open {
+    display: flex; /* Show overlay when open */
+    opacity: 1;
+    /* Removed justify-content and align-items for desktop */
 }
 
 .settings-popover {
@@ -316,9 +324,12 @@ button:disabled {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     width: 300px;
-    max-height: 80vh;
+    max-height: calc(100vh - 80px); /* Give some space from bottom */
     overflow-y: auto;
-    margin: 20px; /* Spacing from edges for desktop */
+    position: fixed; /* Positioned relative to viewport */
+    top: 90.5px; /* Below gear icon */
+    right: calc(50vw - 400px + 10px); /* Aligns with icon's right edge */
+    margin: 0; /* Override any default margin */
     transform: translateX(0); /* Initial state for desktop popover */
     transition: transform 0.3s ease-out; /* Smooth transition for opening/closing */
 }
@@ -380,21 +391,26 @@ button:disabled {
         width: 100%;
     }
 
-    .settings-popover-overlay {
+    .settings-popover-overlay.open {
         align-items: flex-end; /* Align popover content to bottom for mobile */
         justify-content: center;
     }
 
     .settings-popover {
-        width: 100%;
-        max-width: 100%;
+        position: fixed; /* Fixed for mobile card sheet */
+        bottom: 0;
+        left: 50%; /* Center horizontally */
+        width: calc(100% - 40px); /* 20px padding on each side */
         margin: 0;
         border-radius: 8px 8px 0 0;
-        transform: translateY(100%); /* Start hidden from bottom */
+        transform: translate(-50%, 100%); /* Start hidden from bottom, centered */
+        height: auto; /* Allow content to dictate height */
+        padding-bottom: 20px; /* Aesthetic padding */
+        box-sizing: border-box; /* Include padding in width calculation */
     }
     
     .settings-popover-overlay.open .settings-popover {
-        transform: translateY(0); /* Slide up to show */
+        transform: translate(-50%, 0); /* Slide up to show, staying centered */
     }
 
     .settings-icon-btn {
