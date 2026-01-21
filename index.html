@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Night Cost Splitter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        const defaultMembers = ['Tony', 'Nav', 'Caleb', 'Jeff', 'Ingrid', 'Sameer'];
+
+        // Function to shuffle an array
+        const shuffleArray = (array) => {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        };
+
+
+        function ChevronIcon({ isCollapsed }) {
+            return (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`chevron-icon ${isCollapsed ? 'chevron-down' : 'chevron-up'}`}
+                >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            );
+        }
+
+        function CollapsibleSection({ title, children }) {
+            const [isCollapsed, setIsCollapsed] = useState(true);
+
+            return (
+                <div className="collapsible-section">
+                    <div className="section-header" onClick={() => setIsCollapsed(!isCollapsed)}>
+                        <h2>{title}</h2>
+                        <button className="toggle-btn">
+                            <ChevronIcon isCollapsed={isCollapsed} />
+                        </button>
+                    </div>
+                    {!isCollapsed && <div className="section-content">{children}</div>}
+                </div>
+            );
+        }
+
+
+        function App() {
+            const [members, setMembers] = useState([]);
+
+            useEffect(() => {
+                const shuffledNames = shuffleArray(defaultMembers);
+                const initialMembers = shuffledNames.map(name => ({ name, expenses: [] }));
+                setMembers(initialMembers);
+            }, []);
+			
+            const [taxRate, setTaxRate] = useState(8.875);
+            const [tipRate, setTipRate] = useState(20);
+            const [winnings, setWinnings] = useState(35);
+            const [newMemberName, setNewMemberName] = useState("");
+
+            const handleAddMember = () => {
+                if (newMemberName.trim() && !members.find(m => m.name === newMemberName.trim())) {
+                    setMembers([...members, { name: newMemberName.trim(), expenses: [] }]);
+                    setNewMemberName("");
+                }
+            };
+
+            const handleRemoveMember = (memberName) => {
+                setMembers(members.filter(m => m.name !== memberName));
+            };
+
+            const handleAddExpense = (memberName, amount) => {
+                const newMembers = members.map(member => {
+                    if (member.name === memberName) {
+                        const newExpense = parseFloat(amount);
+                        if (!isNaN(newExpense) && newExpense > 0) {
+                            return { ...member, expenses: [...member.expenses, newExpense] };
+                        }
+                    }
+                    return member;
+                });
+                setMembers(newMembers);
+            };
+
+            const handleRemoveExpense = (memberName, expenseIndex) => {
+                const newMembers = members.map(member => {
+                    if (member.name === memberName) {
+                        return { ...member, expenses: member.expenses.filter((_, i) => i !== expenseIndex) };
+                    }
+                    return member;
+                });
+                setMembers(newMembers);
+            };
+
+            const calculations = useMemo(() => {
+                let membersCalculations = members.map(member => {
+                    const subtotal = member.expenses.reduce((acc, expense) => acc + expense, 0);
+                    return {
+                        name: member.name,
+                        subtotal,
+                        winningsShare: 0,
+                        // Tip is based on subtotal before any deductions
+                        tip: subtotal * (tipRate / 100),
+                    };
+                });
+
+                // Determine pre-tax total for winnings distribution
+                let tempMembers = membersCalculations.map(m => ({
+                    ...m,
+                    // For winnings calculation, consider subtotal + tip
+                    preliminaryOwed: m.subtotal + m.tip
+                }));
+
+                let remainingWinnings = winnings;
+                let membersStillOwing = tempMembers.filter(m => m.preliminaryOwed > 0);
+
+                while (remainingWinnings > 0 && membersStillOwing.length > 0) {
+                    const share = remainingWinnings / membersStillOwing.length;
+                    let excessWinnings = 0;
+
+                    for (const member of membersStillOwing) {
+                        const deduction = Math.min(member.preliminaryOwed, share);
+                        member.preliminaryOwed -= deduction;
+
+                        // Find the original member calculation object to update winningsShare
+                        const originalMember = membersCalculations.find(m => m.name === member.name);
+                        originalMember.winningsShare += deduction;
+                        
+                        remainingWinnings -= deduction;
+                        if (share > deduction) {
+                            excessWinnings += share - deduction;
+                        }
+                    }
+
+                    const newMembersStillOwing = membersStillOwing.filter(m => m.preliminaryOwed > 0);
+                     if (newMembersStillOwing.length === membersStillOwing.length && excessWinnings < 0.01) {
+                        if (remainingWinnings > 0 && newMembersStillOwing.length > 0) {
+                            const lastDitchShare = remainingWinnings / newMembersStillOwing.length;
+                            for (const member of newMembersStillOwing) {
+                                const deduction = Math.min(member.preliminaryOwed, lastDitchShare);
+                                member.preliminaryOwed -= deduction;
+                                const originalMember = membersCalculations.find(m => m.name === member.name);
+                                originalMember.winningsShare += deduction;
+                            }
+                        }
+                        break;
+                    }
+                    membersStillOwing = newMembersStillOwing;
+                    remainingWinnings += excessWinnings;
+                }
+
+                // Now, calculate the final values with the correct tax
+                return membersCalculations.map(member => {
+                    const tax = Math.max(0, member.subtotal - member.winningsShare) * (taxRate / 100);
+                    const preWinningsTotal = member.subtotal + tax + member.tip;
+                    const finalOwed = preWinningsTotal - member.winningsShare;
+                    return {
+                        ...member,
+                        tax,
+                        preWinningsTotal,
+                        finalOwed: Math.max(0, finalOwed),
+                    };
+                });
+            }, [members, taxRate, tipRate, winnings]);
+
+
+            return (
+                <div>
+                    <h1>Trivia Night Splitter</h1>
+
+                    <CollapsibleSection title="Global Settings">
+                        <div className="settings">
+                            <div className="input-group">
+                                <label>Tax Rate (%):</label>
+                                <input type="number" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="input-group">
+                                <label>Tip Rate (%):</label>
+                                <input type="number" value={tipRate} onChange={e => setTipRate(parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="input-group">
+                                <label>Winnings ($):</label>
+                                <input type="number" value={winnings} onChange={e => setWinnings(parseFloat(e.target.value) || 0)} disabled={members.length === 0} />
+                            </div>
+                        </div>
+                    </CollapsibleSection>
+
+                    <CollapsibleSection title="Add Member">
+                        <div className="add-member">
+                            <div className="input-group">
+                                <input
+                                    type="text"
+                                    value={newMemberName}
+                                    onChange={e => setNewMemberName(e.target.value)}
+                                    placeholder="Enter member name"
+                                />
+                                <button onClick={handleAddMember}>Add Member</button>
+                            </div>
+                        </div>
+                    </CollapsibleSection>
+
+                    <div className="members-container">
+                        <h2>Members</h2>
+                        {members.map(member => {
+                            const calculatedMember = calculations.find(c => c.name === member.name);
+                            return (
+                                <Member
+                                    key={member.name}
+                                    member={member}
+                                    calculated={calculatedMember}
+                                    onRemoveMember={handleRemoveMember}
+                                    onAddExpense={handleAddExpense}
+                                    onRemoveExpense={handleRemoveExpense}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        function Member({ member, calculated, onRemoveMember, onAddExpense, onRemoveExpense }) {
+            const [newExpense, setNewExpense] = useState("");
+
+            const handleAddExpense = () => {
+                if (newExpense.trim()) {
+                    onAddExpense(member.name, newExpense);
+                    setNewExpense("");
+                }
+            };
+
+            return (
+                <div className="member">
+                    <div className="member-header">
+                        <h3>{member.name}</h3>
+                        <button className="remove-member-btn" onClick={() => onRemoveMember(member.name)}>Remove</button>
+                    </div>
+
+                    <div className="expenses">
+                        <h4>Expenses</h4>
+                        <ul>
+                            {member.expenses.map((expense, index) => (
+                                <li key={index}>
+                                    ${expense.toFixed(2)}
+                                    <button className="remove-expense-btn" onClick={() => onRemoveExpense(member.name, index)}>Remove</button>
+                                </li>
+                            ))}
+                        </ul>
+                        <div className="input-group">
+                            <input
+                                type="number"
+                                value={newExpense}
+                                onChange={e => setNewExpense(e.target.value)}
+                                placeholder="Expense amount"
+                            />
+                            <button onClick={handleAddExpense}>Add</button>
+                        </div>
+                    </div>
+
+                    {calculated && (
+                         <div className="calculations">
+                            <p>Subtotal: <span>${calculated.subtotal.toFixed(2)}</span></p>
+                            <p>Tax: <span>${calculated.tax.toFixed(2)}</span></p>
+                            <p>Tip: <span>${calculated.tip.toFixed(2)}</span></p>
+                            <p>Pre-Winnings: <span>${calculated.preWinningsTotal.toFixed(2)}</span></p>
+                            <p>Winnings Share: <span>-${calculated.winningsShare.toFixed(2)}</span></p>
+                            <p className="final-owed">Final Owed: <span>${calculated.finalOwed.toFixed(2)}</span></p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
