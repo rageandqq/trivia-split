@@ -65,6 +65,43 @@
             );
         }
 
+        function SettingsIcon({ onClick }) {
+            return (
+                <button className="settings-icon-btn" onClick={onClick}>
+                    <img src="gear.svg" alt="Settings Gear" className="settings-icon" />
+                </button>
+            );
+        }
+
+        function SettingsPopover({ taxRate, setTaxRate, tipRate, setTipRate, winnings, setWinnings, members, onClose, isOpen }) {
+            if (!isOpen) return null;
+
+            return (
+                <div className={`settings-popover-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
+                    <div className="settings-popover" onClick={e => e.stopPropagation()}>
+                        <div className="settings-popover-header">
+                            <h2>Global Settings</h2>
+                            <button className="close-popover-btn icon-button" onClick={onClose}><XIcon /></button>
+                        </div>
+                        <div className="settings-popover-content">
+                            <div className="input-group">
+                                <label>Tax Rate (%):</label>
+                                <input type="number" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="input-group">
+                                <label>Tip Rate (%):</label>
+                                <input type="number" value={tipRate} onChange={e => setTipRate(parseFloat(e.target.value) || 0)} />
+                            </div>
+                            <div className="input-group">
+                                <label>Winnings ($):</label>
+                                <input type="number" value={winnings} onChange={e => setWinnings(parseFloat(e.target.value) || 0)} disabled={members.length === 0} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         function CollapsibleSection({ title, children, initialCollapsed = true }) {
             const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
 
@@ -105,180 +142,176 @@
                 setMembers(initialMembers);
             }, []);
 			
-            const [taxRate, setTaxRate] = useState(8.875);
-            const [tipRate, setTipRate] = useState(20);
-            const [winnings, setWinnings] = useState(35);
-            const [newMemberName, setNewMemberName] = useState("");
-
-            const handleAddMember = () => {
-                if (newMemberName.trim() && !members.find(m => m.name === newMemberName.trim())) {
-                    setMembers([...members, { name: newMemberName.trim(), expenses: [] }]);
-                    setNewMemberName("");
-                }
-            };
-
-            const handleRemoveMember = (memberName) => {
-                setMembers(members.filter(m => m.name !== memberName));
-            };
-
-            const handleAddExpense = (memberName, amount) => {
-                const newMembers = members.map(member => {
-                    if (member.name === memberName) {
-                        const newExpense = parseFloat(amount);
-                        if (!isNaN(newExpense) && newExpense > 0) {
-                            return { ...member, expenses: [...member.expenses, newExpense] };
-                        }
-                    }
-                    return member;
-                });
-                setMembers(newMembers);
-            };
-
-            const handleRemoveExpense = (memberName, expenseIndex) => {
-                const newMembers = members.map(member => {
-                    if (member.name === memberName) {
-                        return { ...member, expenses: member.expenses.filter((_, i) => i !== expenseIndex) };
-                    }
-                    return member;
-                });
-                setMembers(newMembers);
-            };
-
-            const calculations = useMemo(() => {
-                let membersCalculations = members.map(member => {
-                    const subtotal = member.expenses.reduce((acc, expense) => acc + expense, 0);
-                    return {
-                        name: member.name,
-                        subtotal,
-                        winningsShare: 0,
-                        // Tip is based on subtotal before any deductions
-                        tip: subtotal * (tipRate / 100),
-                    };
-                });
-
-                // Determine pre-tax total for winnings distribution
-                let tempMembers = membersCalculations.map(m => ({
-                    ...m,
-                    // For winnings calculation, consider subtotal + tip
-                    preliminaryOwed: m.subtotal + m.tip
-                }));
-
-                let remainingWinnings = winnings;
-                let membersStillOwing = tempMembers.filter(m => m.preliminaryOwed > 0);
-
-                while (remainingWinnings > 0 && membersStillOwing.length > 0) {
-                    const share = remainingWinnings / membersStillOwing.length;
-                    let excessWinnings = 0;
-
-                    for (const member of membersStillOwing) {
-                        const deduction = Math.min(member.preliminaryOwed, share);
-                        member.preliminaryOwed -= deduction;
-
-                        // Find the original member calculation object to update winningsShare
-                        const originalMember = membersCalculations.find(m => m.name === member.name);
-                        originalMember.winningsShare += deduction;
+                        const [taxRate, setTaxRate] = useState(8.875);
+                        const [tipRate, setTipRate] = useState(20);
+                        const [winnings, setWinnings] = useState(35);
+                        const [newMemberName, setNewMemberName] = useState("");
+                        const [showSettingsPopover, setShowSettingsPopover] = useState(false); // State for settings popover
                         
-                        remainingWinnings -= deduction;
-                        if (share > deduction) {
-                            excessWinnings += share - deduction;
-                        }
-                    }
-
-                    const newMembersStillOwing = membersStillOwing.filter(m => m.preliminaryOwed > 0);
-                     if (newMembersStillOwing.length === membersStillOwing.length && excessWinnings < 0.01) {
-                        if (remainingWinnings > 0 && newMembersStillOwing.length > 0) {
-                            const lastDitchShare = remainingWinnings / newMembersStillOwing.length;
-                            for (const member of newMembersStillOwing) {
-                                const deduction = Math.min(member.preliminaryOwed, lastDitchShare);
-                                member.preliminaryOwed -= deduction;
-                                const originalMember = membersCalculations.find(m => m.name === member.name);
-                                originalMember.winningsShare += deduction;
+                        const handleAddMember = () => {
+                            if (newMemberName.trim() && !members.find(m => m.name === newMemberName.trim())) {
+                                setMembers([...members, { name: newMemberName.trim(), expenses: [] }]);
+                                setNewMemberName("");
                             }
-                        }
-                        break;
+                        };
+            
+                        const handleRemoveMember = (memberName) => {
+                            setMembers(members.filter(m => m.name !== memberName));
+                        };
+            
+                        const handleAddExpense = (memberName, amount) => {
+                            const newMembers = members.map(member => {
+                                if (member.name === memberName) {
+                                    const newExpense = parseFloat(amount);
+                                    if (!isNaN(newExpense) && newExpense > 0) {
+                                        return { ...member, expenses: [...member.expenses, newExpense] };
+                                    }
+                                }
+                                return member;
+                            });
+                            setMembers(newMembers);
+                        };
+            
+                        const handleRemoveExpense = (memberName, expenseIndex) => {
+                            const newMembers = members.map(member => {
+                                if (member.name === memberName) {
+                                    return { ...member, expenses: member.expenses.filter((_, i) => i !== expenseIndex) };
+                                }
+                                return member;
+                            });
+                            setMembers(newMembers);
+                        };
+            
+                        const calculations = useMemo(() => {
+                            let membersCalculations = members.map(member => {
+                                const subtotal = member.expenses.reduce((acc, expense) => acc + expense, 0);
+                                return {
+                                    name: member.name,
+                                    subtotal,
+                                    winningsShare: 0,
+                                    // Tip is based on subtotal before any deductions
+                                    tip: subtotal * (tipRate / 100),
+                                };
+                            });
+            
+                            // Determine pre-tax total for winnings distribution
+                            let tempMembers = membersCalculations.map(m => ({
+                                ...m,
+                                // For winnings calculation, consider subtotal + tip
+                                preliminaryOwed: m.subtotal + m.tip
+                            }));
+            
+                            let remainingWinnings = winnings;
+                            let membersStillOwing = tempMembers.filter(m => m.preliminaryOwed > 0);
+            
+                            while (remainingWinnings > 0 && membersStillOwing.length > 0) {
+                                const share = remainingWinnings / membersStillOwing.length;
+                                let excessWinnings = 0;
+            
+                                for (const member of membersStillOwing) {
+                                    const deduction = Math.min(member.preliminaryOwed, share);
+                                    member.preliminaryOwed -= deduction;
+            
+                                    // Find the original member calculation object to update winningsShare
+                                    const originalMember = membersCalculations.find(m => m.name === member.name);
+                                    originalMember.winningsShare += deduction;
+                                    
+                                    remainingWinnings -= deduction;
+                                    if (share > deduction) {
+                                        excessWinnings += share - deduction;
+                                    }
+                                }
+            
+                                const newMembersStillOwing = membersStillOwing.filter(m => m.preliminaryOwed > 0);
+                                 if (newMembersStillOwing.length === membersStillOwing.length && excessWinnings < 0.01) {
+                                    if (remainingWinnings > 0 && newMembersStillOwing.length > 0) {
+                                        const lastDitchShare = remainingWinnings / newMembersStillOwing.length;
+                                        for (const member of newMembersStillOwing) {
+                                            const deduction = Math.min(member.preliminaryOwed, lastDitchShare);
+                                            member.preliminaryOwed -= deduction;
+                                            const originalMember = membersCalculations.find(m => m.name === member.name);
+                                            originalMember.winningsShare += deduction;
+                                        }
+                                    }
+                                    break;
+                                }
+                                membersStillOwing = newMembersStillOwing;
+                                remainingWinnings += excessWinnings;
+                            }
+            
+                            // Now, calculate the final values with the correct tax
+                            return membersCalculations.map(member => {
+                                const tax = Math.max(0, member.subtotal - member.winningsShare) * (taxRate / 100);
+                                const preWinningsTotal = member.subtotal + tax + member.tip;
+                                const finalOwed = preWinningsTotal - member.winningsShare;
+                                return {
+                                    ...member,
+                                    tax,
+                                    preWinningsTotal,
+                                    finalOwed: Math.max(0, finalOwed),
+                                };
+                            });
+                        }, [members, taxRate, tipRate, winnings]);
+            
+            
+                        return (
+                            <div>
+                            <div className="logo-container">
+                                <img src="logo.JPG" alt="Trivia Night Logo" className="logo-image" />
+                                <h1>Trivia Split</h1>
+                                <SettingsIcon onClick={() => setShowSettingsPopover(true)} />
+                            </div>
+            
+                                <CollapsibleSection title="Summary" initialCollapsed={false}>
+                                    <SummarySection calculations={calculations} />
+                                </CollapsibleSection>
+            
+                                <div className="members-container">
+                                    <h2>Members</h2>
+                                    {members.map(member => {
+                                        const calculatedMember = calculations.find(c => c.name === member.name);
+                                        return (
+                                            <Member
+                                                key={member.name}
+                                                member={member}
+                                                calculated={calculatedMember}
+                                                onRemoveMember={handleRemoveMember}
+                                                onAddExpense={handleAddExpense}
+                                                onRemoveExpense={handleRemoveExpense}
+                                            />
+                                        );
+                                    })}
+                                </div>
+            
+                                <CollapsibleSection title="Manage Members">
+                                    <div className="add-member">
+                                        <div className="input-group input-group-responsive">
+                                            <input
+                                                type="text"
+                                                value={newMemberName}
+                                                onChange={e => setNewMemberName(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && handleAddMember()}
+                                                placeholder="Enter member name"
+                                            />
+                                            <button onClick={handleAddMember} className="icon-button"><PlusIcon /></button>
+                                        </div>
+                                    </div>
+                                </CollapsibleSection>
+            
+                                <SettingsPopover 
+                                    isOpen={showSettingsPopover}
+                                    onClose={() => setShowSettingsPopover(false)}
+                                    taxRate={taxRate}
+                                    setTaxRate={setTaxRate}
+                                    tipRate={tipRate}
+                                    setTipRate={setTipRate}
+                                    winnings={winnings}
+                                    setWinnings={setWinnings}
+                                    members={members}
+                                />
+                            </div>
+                        );
                     }
-                    membersStillOwing = newMembersStillOwing;
-                    remainingWinnings += excessWinnings;
-                }
-
-                // Now, calculate the final values with the correct tax
-                return membersCalculations.map(member => {
-                    const tax = Math.max(0, member.subtotal - member.winningsShare) * (taxRate / 100);
-                    const preWinningsTotal = member.subtotal + tax + member.tip;
-                    const finalOwed = preWinningsTotal - member.winningsShare;
-                    return {
-                        ...member,
-                        tax,
-                        preWinningsTotal,
-                        finalOwed: Math.max(0, finalOwed),
-                    };
-                });
-            }, [members, taxRate, tipRate, winnings]);
-
-
-            return (
-                <div>
-                <div className="logo-container">
-                    <img src="logo.JPG" alt="Trivia Night Logo" className="logo-image" />
-                    <h1>Trivia Night Splitter</h1>
-                </div>
-
-                    <CollapsibleSection title="Summary" initialCollapsed={false}>
-                        <SummarySection calculations={calculations} />
-                    </CollapsibleSection>
-
-                    <CollapsibleSection title="Global Settings">
-                        <div className="settings">
-                            <div className="input-group">
-                                <label>Tax Rate (%):</label>
-                                <input type="number" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
-                            </div>
-                            <div className="input-group">
-                                <label>Tip Rate (%):</label>
-                                <input type="number" value={tipRate} onChange={e => setTipRate(parseFloat(e.target.value) || 0)} />
-                            </div>
-                            <div className="input-group">
-                                <label>Winnings ($):</label>
-                                <input type="number" value={winnings} onChange={e => setWinnings(parseFloat(e.target.value) || 0)} disabled={members.length === 0} />
-                            </div>
-                        </div>
-                    </CollapsibleSection>
-
-                    <CollapsibleSection title="Add Member">
-                        <div className="add-member">
-                            <div className="input-group input-group-responsive">
-                                <input
-                                    type="text"
-                                    value={newMemberName}
-                                    onChange={e => setNewMemberName(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleAddMember()}
-                                    placeholder="Enter member name"
-                                />
-                                <button onClick={handleAddMember} className="icon-button"><PlusIcon /></button>
-                            </div>
-                        </div>
-                    </CollapsibleSection>
-
-                    <div className="members-container">
-                        <h2>Members</h2>
-                        {members.map(member => {
-                            const calculatedMember = calculations.find(c => c.name === member.name);
-                            return (
-                                <Member
-                                    key={member.name}
-                                    member={member}
-                                    calculated={calculatedMember}
-                                    onRemoveMember={handleRemoveMember}
-                                    onAddExpense={handleAddExpense}
-                                    onRemoveExpense={handleRemoveExpense}
-                                />
-                            );
-                        })}
-                    </div>
-                </div>
-            );
-        }
-
         function Member({ member, calculated, onRemoveMember, onAddExpense, onRemoveExpense }) {
             const [newExpense, setNewExpense] = useState("");
             const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);

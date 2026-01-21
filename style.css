@@ -25,6 +25,7 @@ h1 {
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
+    position: relative; /* Needed for absolute positioning of settings icon */
 }
 
 .logo-image {
@@ -34,6 +35,34 @@ h1 {
     margin-right: 10px;
     vertical-align: middle; /* Ensure vertical alignment with text */
 }
+
+.settings-icon-btn {
+    position: absolute;
+    top: 10px; /* Adjust as needed */
+    right: 10px; /* Adjust as needed */
+    background-color: #1877f2;
+    color: #fff;
+    border: none;
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px; /* Slightly larger for settings icon */
+    height: 35px; /* Slightly larger for settings icon */
+}
+
+.settings-icon-btn:hover {
+    background-color: #166fe5;
+}
+
+.settings-icon {
+    stroke: #fff;
+    width: 20px;
+    height: 20px;
+}
+
 
 .settings, .add-member, .members-container {
     margin-bottom: 20px;
@@ -268,6 +297,48 @@ button:disabled {
     margin-top: 10px;
 }
 
+.settings-popover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end; /* Align popover content to top-right initially */
+    align-items: flex-start; /* Align popover content to top-right initially */
+}
+
+.settings-popover {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: 20px; /* Spacing from edges for desktop */
+    transform: translateX(0); /* Initial state for desktop popover */
+    transition: transform 0.3s ease-out; /* Smooth transition for opening/closing */
+}
+
+.settings-popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.close-popover-btn {
+    background-color: #fa3e3e; /* Red for close button */
+}
+
+.close-popover-btn:hover {
+    background-color: #e03030;
+}
+
+
 @media (max-width: 500px) {
     #root {
         padding: 10px;
@@ -307,5 +378,29 @@ button:disabled {
 
     .input-group input {
         width: 100%;
+    }
+
+    .settings-popover-overlay {
+        align-items: flex-end; /* Align popover content to bottom for mobile */
+        justify-content: center;
+    }
+
+    .settings-popover {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        border-radius: 8px 8px 0 0;
+        transform: translateY(100%); /* Start hidden from bottom */
+    }
+    
+    .settings-popover-overlay.open .settings-popover {
+        transform: translateY(0); /* Slide up to show */
+    }
+
+    .settings-icon-btn {
+        top: 5px;
+        right: 5px;
+        width: 30px;
+        height: 30px;
     }
 }
