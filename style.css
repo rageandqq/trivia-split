@@ -472,11 +472,14 @@ button:disabled {
         position: fixed; /* Fixed for mobile card sheet */
         bottom: 0;
         left: 50%; /* Center horizontally */
-        width: calc(100% - 40px); /* 20px padding on each side */
+        top: auto; /* Unset desktop top positioning */
+        right: auto; /* Unset desktop right positioning */
+        width: calc(100%); /* 20px padding on each side */
         margin: 0;
         border-radius: 8px 8px 0 0;
         transform: translate(-50%, 100%); /* Start hidden from bottom, centered */
         height: auto; /* Allow content to dictate height */
+        max-height: 90vh; /* Ensure it doesn't exceed screen height */
         padding-bottom: 20px; /* Aesthetic padding */
         box-sizing: border-box; /* Include padding in width calculation */
     }
