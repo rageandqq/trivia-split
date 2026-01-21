@@ -65,6 +65,7 @@ h1 {
     border-radius: 4px;
 }
 
+/* General button styles for text buttons */
 button {
     background-color: #1877f2;
     color: #fff;
@@ -82,6 +83,32 @@ button:hover {
 button:disabled {
     background-color: #a0a0a0;
     cursor: not-allowed;
+}
+
+/* Icon button specific styles */
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; /* Fixed width for square button */
+    height: 30px; /* Fixed height for square button */
+    padding: 0; /* Override default button padding */
+    border-radius: 50%; /* Make them circular */
+    font-weight: normal; /* Override font-weight bold */
+    background-color: #1877f2; /* Default blue for add icons */
+    color: #fff;
+}
+
+.icon-button:hover {
+    background-color: #166fe5;
+}
+
+.plus-icon {
+    stroke: #fff;
+}
+
+.x-icon {
+    stroke: #fff;
 }
 
 
@@ -106,7 +133,7 @@ button:disabled {
 }
 
 .remove-member-btn {
-    background-color: #fa3e3e;
+    background-color: #fa3e3e; /* Red for remove */
 }
 
 .remove-member-btn:hover {
@@ -127,13 +154,15 @@ button:disabled {
 }
 
 .remove-expense-btn {
-    background-color: #f5a623;
-    padding: 5px 10px;
-    font-size: 12px;
+    background-color: #fa3e3e; /* Red for remove */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    padding: 0;
 }
 
 .remove-expense-btn:hover {
-    background-color: #df9820;
+    background-color: #e03030;
 }
 
 .calculations {
