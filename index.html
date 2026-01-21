@@ -85,16 +85,25 @@
                         </div>
                         <div className="settings-popover-content">
                             <div className="input-group">
-                                <label>Tax Rate (%):</label>
-                                <input type="number" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
+                                <label>Tax Rate:</label>
+                                <div className="input-with-suffix">
+                                    <input type="number" value={taxRate} onChange={e => setTaxRate(parseFloat(e.target.value) || 0)} />
+                                    <span>%</span>
+                                </div>
                             </div>
                             <div className="input-group">
-                                <label>Tip Rate (%):</label>
-                                <input type="number" value={tipRate} onChange={e => setTipRate(parseFloat(e.target.value) || 0)} />
+                                <label>Tip Rate:</label>
+                                <div className="input-with-suffix">
+                                    <input type="number" value={tipRate} onChange={e => setTipRate(parseFloat(e.target.value) || 0)} />
+                                    <span>%</span>
+                                </div>
                             </div>
                             <div className="input-group">
-                                <label>Winnings ($):</label>
-                                <input type="number" value={winnings} onChange={e => setWinnings(parseFloat(e.target.value) || 0)} disabled={members.length === 0} />
+                                <label>Winnings:</label>
+                                <div className="input-with-prefix">
+                                    <span>$</span>
+                                    <input type="number" value={winnings} onChange={e => setWinnings(parseFloat(e.target.value) || 0)} disabled={members.length === 0} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -347,13 +356,16 @@
                             ))}
                         </ul>
                         <div className="input-group input-group-responsive">
-                            <input
-                                type="number"
-                                value={newExpense}
-                                onChange={e => setNewExpense(e.target.value)}
-                                onKeyDown={handleExpenseKeyDown}
-                                placeholder="Expense amount"
-                            />
+                            <div className="input-with-prefix">
+                                <span>$</span>
+                                <input
+                                    type="number"
+                                    value={newExpense}
+                                    onChange={e => setNewExpense(e.target.value)}
+                                    onKeyDown={handleExpenseKeyDown}
+                                    placeholder="Expense amount"
+                                />
+                            </div>
                             <button onClick={handleAddExpense} className="icon-button"><PlusIcon /></button>
                         </div>
                     </div>
