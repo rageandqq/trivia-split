@@ -182,11 +182,25 @@
                             setMembers(members.filter(m => m.name !== memberName));
                         };
             
-                        const handleAddExpense = (memberName, amount) => {
+                        const handleAddExpense = (memberName, expenseData) => {
                             const newMembers = members.map(member => {
                                 if (member.name === memberName) {
-                                    const newExpense = parseFloat(amount);
-                                    if (!isNaN(newExpense) && newExpense > 0) {
+                                    // Handle both old format (number) and new format (object)
+                                    let newExpense;
+                                    if (typeof expenseData === 'number') {
+                                        newExpense = {
+                                            amount: expenseData,
+                                            description: 'Expense',
+                                            quantity: 1
+                                        };
+                                    } else {
+                                        newExpense = {
+                                            amount: expenseData.amount,
+                                            description: expenseData.description || 'Expense',
+                                            quantity: expenseData.quantity || 1
+                                        };
+                                    }
+                                    if (!isNaN(newExpense.amount) && newExpense.amount > 0) {
                                         return { ...member, expenses: [...member.expenses, newExpense] };
                                     }
                                 }
@@ -301,7 +315,11 @@
                             if (!item || quantity > item.remainingQuantity) return;
 
                             const amount = quantity * item.unitPrice;
-                            handleAddExpense(memberName, amount);
+                            handleAddExpense(memberName, {
+                                amount: amount,
+                                description: item.description,
+                                quantity: quantity
+                            });
 
                             setUnassignedItems(prev => {
                                 return prev.map(item => {
@@ -321,9 +339,9 @@
                             setUnassignedItems(prev => prev.filter(i => i.id !== itemId));
                         };
             
-                        const calculations = useMemo(() => {
-                            let membersCalculations = members.map(member => {
-                                const subtotal = member.expenses.reduce((acc, expense) => acc + expense, 0);
+                            const calculations = useMemo(() => {
+                                let membersCalculations = members.map(member => {
+                                    const subtotal = member.expenses.reduce((acc, expense) => acc + (typeof expense === 'number' ? expense : expense.amount), 0);
                                 return {
                                     name: member.name,
                                     subtotal,
@@ -656,13 +674,23 @@
         }
 
         function Member({ member, calculated, onRemoveMember, onAddExpense, onRemoveExpense }) {
-            const [newExpense, setNewExpense] = useState("");
+            const [newExpenseName, setNewExpenseName] = useState("");
+            const [newExpenseAmount, setNewExpenseAmount] = useState("");
             const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);
 
             const handleAddExpense = () => {
-                if (newExpense.trim()) {
-                    onAddExpense(member.name, newExpense);
-                    setNewExpense("");
+                if (newExpenseAmount.trim()) {
+                    const amount = parseFloat(newExpenseAmount);
+                    if (!isNaN(amount) && amount > 0) {
+                        const description = newExpenseName.trim() || 'Expense';
+                        onAddExpense(member.name, {
+                            amount: amount,
+                            description: description,
+                            quantity: 1
+                        });
+                        setNewExpenseName("");
+                        setNewExpenseAmount("");
+                    }
                 }
             };
             
@@ -682,26 +710,47 @@
                     <div className="expenses">
                         <h4>Expenses</h4>
                         <ul>
-                            {member.expenses.map((expense, index) => (
-                                <li key={index}>
-                                    ${expense.toFixed(2)}
-                                    <button className="remove-expense-btn icon-button" onClick={() => onRemoveExpense(member.name, index)}><XIcon /></button>
-                                </li>
-                            ))}
+                            {member.expenses.map((expense, index) => {
+                                const expenseObj = typeof expense === 'number' ? { amount: expense, description: 'Expense', quantity: 1 } : expense;
+                                const displayText = expenseObj.quantity > 1 
+                                    ? `${expenseObj.quantity} ${expenseObj.description}` 
+                                    : expenseObj.description;
+                                return (
+                                    <li key={index} className="expense-item">
+                                        <span className="expense-description">{displayText}</span>
+                                        <span className="expense-amount">${expenseObj.amount.toFixed(2)}</span>
+                                        <button className="remove-expense-btn icon-button" onClick={() => onRemoveExpense(member.name, index)}><XIcon /></button>
+                                    </li>
+                                );
+                            })}
                         </ul>
-                        <div className="input-group input-group-responsive">
-                            <div className="input-with-prefix">
+                        <div className="manual-expense-entry">
+                            <input
+                                type="text"
+                                value={newExpenseName}
+                                onChange={e => setNewExpenseName(e.target.value)}
+                                onKeyDown={handleExpenseKeyDown}
+                                placeholder="(Optional) Item"
+                                className={`expense-name-input ${!newExpenseName.trim() ? 'optional' : ''}`}
+                            />
+                            <div className="input-with-prefix expense-amount-input">
                                 <span>$</span>
                                 <input
                                     type="number"
                                     inputMode="decimal"
-                                    value={newExpense}
-                                    onChange={e => setNewExpense(e.target.value)}
+                                    value={newExpenseAmount}
+                                    onChange={e => setNewExpenseAmount(e.target.value)}
                                     onKeyDown={handleExpenseKeyDown}
-                                    placeholder="Expense amount"
+                                    placeholder="Amount"
                                 />
                             </div>
-                            <button onClick={handleAddExpense} className="icon-button"><PlusIcon /></button>
+                            <button 
+                                onClick={handleAddExpense} 
+                                className="icon-button"
+                                disabled={!newExpenseAmount.trim() || parseFloat(newExpenseAmount) <= 0}
+                            >
+                                <PlusIcon />
+                            </button>
                         </div>
                     </div>
 
